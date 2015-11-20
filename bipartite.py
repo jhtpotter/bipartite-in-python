@@ -4,6 +4,7 @@
 import sys
 import random
 import string
+import re
 
 infile = open("Example_OTUs.csv", "r")
 infile.readline()
