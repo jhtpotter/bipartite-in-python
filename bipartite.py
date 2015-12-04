@@ -220,12 +220,12 @@ def extinction(dataframe, participant, method):
         print("Column indexes, sorted by column sum:")
         print(colseq)
         if participant == "lower":
+            print("Making row",rowseq[0],"extinct")
             for colindex in range(1,numcols+1):
-                print("Making row",rowseq[0],"extinct")
                 dataframe[rowseq[0]][colindex] = 0
         elif participant == "higher":
+            print("Making column",colseq[0],"extinct")
             for rowindex in range(1,numrows+1):
-                print("Making column",colseq[0],"extinct")
                 dataframe[rowindex][colseq[0]] = 0
         elif participant == "both":
             if min(rowsums) < min(colsums):
