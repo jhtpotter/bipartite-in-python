@@ -72,10 +72,13 @@ def empty(dataframe, count=False):
         dataframe.pop(emptyrow)
     # Get rid of empty columns
     for emptycol in emptycolids:
-        for rowindex in range(1,len(dataframe)):
+        for rowindex in range(0,len(dataframe)):
             popped = dataframe[rowindex].pop(emptycol)
-            if not popped == 0:
-                sys.exit("Error, removing a nonzero value")
+            if rowindex == 0:
+                continue
+            else:
+                if not popped == 0:
+                    sys.exit("Error, removing a nonzero value")
     emptyinfo = [numemptyrows, numemptycols]
     return [dataframe, emptyinfo]
 
