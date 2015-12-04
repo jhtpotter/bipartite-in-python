@@ -17,8 +17,8 @@ for idx, line in enumerate(infile):
 #    print(row)
     exampleOTUs.append(row)
 
-for line in exampleOTUs:
-    print(line)
+#for line in exampleOTUs:
+#    print(line)
 
 #sys.exit("Test")
 
@@ -31,6 +31,60 @@ def unshared_copy(inList):
         return list( map(unshared_copy, inList) )
     return inList
 
+
+##################################################
+##################################################
+#Define function: eval_df
+
+def eval_df(dataframe, taxadict):
+    predatorlist = dataframe[0][:]
+    print("Predator list:",predatorlist)
+    for colindex in range(1, len(predatorlist)):
+        col = []
+        predator = predatorlist[colindex]
+        print("Predator:",predator)
+        preygained = 0
+        preylost = 0
+        if predator not in taxadict:
+            sys.exit("Error, predator not found in dictionary.")
+        preybreadth = len(taxadict[predator]) - 1
+        print("Number of prey species currently in dictionary for this predator:",preybreadth)
+        for rowindex in range(1, len(dataframe)):
+            preyOTU = dataframe[rowindex][0]
+            print("Prey name:",preyOTU)
+            interactionval = dataframe[rowindex][colindex]
+            if interactionval == 1:
+                col.append(interactionval)
+                if taxadict[predator].count(preyOTU) == 0:
+                    taxadict[predator].append(preyOTU)
+                    preygained += 1
+                elif taxadict[predator].count(preyOTU) == 1:
+                    continue
+                else:
+                    sys.exit("Error, prey found more than once under predator lookup.")
+            elif interactionval == 0:
+                col.append(interactionval)
+                if taxadict[predator].count(preyOTU) == 0:
+                    continue
+                elif taxadict[predator].count(preyOTU) == 1:
+                    taxadict[predator].remove(preyOTU)
+                    preylost += 1
+                else:
+                    sys.exit("Error, prey found more than once under predator lookup.")
+            else:
+                sys.exit("Error, non-binary interaction value found.")
+        colsum = sum(col)
+        if colsum != len(taxadict[predator])-1:
+            sys.exit("Error, mismatch in number of predator interactions.")
+        if colsum != preybreadth + preygained - preylost:
+            sys.exit("Error, mismatch in number of predator interactions.")
+        taxadict[predator][0] = colsum
+#    for key, vals in taxadict.items():
+#        print(key, ":", vals)
+    return taxadict
+        
+
+                    
 
 ##################################################
 ##################################################
@@ -119,6 +173,8 @@ def extinction(dataframe, participant, method):
             for rowindex in range(1,numrows+1):
                 dataframe[rowindex][colextin] = 0
     elif method == "abundance":
+        rowsums = []
+        colsums = []
         # Reshuffle columns
         randomcolorder = list(range(1,numcols+1))
         random.shuffle(randomcolorder)
@@ -155,13 +211,21 @@ def extinction(dataframe, participant, method):
                 col.append(dataframe[rowindex][colindex])
             colsum = sum(col)
             colsums.append(colsum)
+        print("Row sums:", rowsums)
+        print("Column sums:", colsums)
         rowseq = [i[0]+1 for i in sorted(enumerate(rowsums), key=lambda x:x[1])]
+        print("Row indexes, sorted by row sum:")
+        print(rowseq)
         colseq = [i[0]+1 for i in sorted(enumerate(colsums), key=lambda x:x[1])]
+        print("Column indexes, sorted by column sum:")
+        print(colseq)
         if participant == "lower":
             for colindex in range(1,numcols+1):
+                print("Making row",rowseq[0],"extinct")
                 dataframe[rowseq[0]][colindex] = 0
         elif participant == "higher":
             for rowindex in range(1,numrows+1):
+                print("Making column",colseq[0],"extinct")
                 dataframe[rowindex][colseq[0]] = 0
         elif participant == "both":
             if min(rowsums) < min(colsums):
@@ -217,6 +281,37 @@ def secondextinction(dataframe, participant, method):
     numrows = len(dataframe)-1
     print("Number of columns:",numcols)
     print("Number of rows:",numrows)
+    input("Press enter to continue")
+    interactiondict = {}
+    predatorlist = dataframe[0][1:]
+    print("Starting predator list:",predatorlist)
+    numpreds = len(predatorlist)
+    for colindex in range(1, numpreds + 1):
+        predator = predatorlist[colindex-1]
+#        print("Predator:",predator)
+        if predator in interactiondict:
+            sys.exit("Error, predator already in dictionary")
+        else:
+            interactiondict[predator] = [0]
+        for rowindex in range(1, len(dataframe)):
+            preyOTU = dataframe[rowindex][0]
+#            print("Prey name:",preyOTU)
+            interactionval = dataframe[rowindex][colindex]
+            if interactionval == 1:
+                if predator not in interactiondict:
+                    sys.exit("Error, predator not found in dictionary")
+                else:
+                    if interactiondict[predator].count(preyOTU) != 0:
+                        sys.exit("Error, prey already found under predator lookup")
+                    else:
+                        interactiondict[predator].append(preyOTU)
+                        interactiondict[predator][0] += 1
+            elif interactionval == 0:
+                continue
+            else:
+                sys.exit("Error, non-binary interaction value found")
+    for key, vals in interactiondict.items():
+        print(key, ":", vals)
     input("Press enter to continue.\n")
     participants = ("lower", "higher", "both")
     methods = ("random", "abundance", "degree")
@@ -224,7 +319,7 @@ def secondextinction(dataframe, participant, method):
         participant = input("Please re-enter your participant, lower/higher/both...\n")
     while method not in methods:
         method = input("Please re-enter your method, random/abundance/degree...\n")
-    def onesecondextinction(osDataframe, osParticipant, osMethod):
+    def onesecondextinction(osDataframe, osParticipant, osMethod, currentdict):
         dead = []
         dead.append(["no","ext.lower","ext.higher"])
         osDF = unshared_copy(osDataframe)
@@ -233,14 +328,21 @@ def secondextinction(dataframe, participant, method):
         while repz:
             # Run extinction() to kill off one taxon
             currentdf = extinction(dataframe=osDF, participant=osParticipant, method=osMethod)
-            print("Dataframe after running extinction:")
             for line in currentdf:
                 print(line)
+            print("Above is the dataframe after running extinction().")
+            input("Press enter to continue")
+            # Re-evaluate interaction dictionary
+            currentdict = eval_df(dataframe=currentdf, taxadict=currentdict)
+            for key, vals in currentdict.items():
+                print(key, ":", vals)
+            print("Above is your updated dictionary.")
+            input("Press enter to continue")
             # Run empty() to clean up dataframe
             osDF, emptyoutput = empty(currentdf, count=True)
-            print("Dataframe after clearing with empty:")
             for line in osDF:
                 print(line)
+            print("Above is the dataframe after clearing with empty().")
             if not len(emptyoutput) == 2:
                 print(emptyoutput)
                 sys.exit("Error, output from function empty() not of correct length")
@@ -266,7 +368,7 @@ def secondextinction(dataframe, participant, method):
 #        for line in dead2:
 #            print(line)
         return dead2
-    seOutput = onesecondextinction(osDataframe=dataframe, osParticipant=participant, osMethod=method)
+    seOutput = onesecondextinction(osDataframe=dataframe, osParticipant=participant, osMethod=method, currentdict=interactiondict)
     return seOutput
 
 myoutput = secondextinction(dataframe=exampleOTUs,participant="lower",method="abundance")
