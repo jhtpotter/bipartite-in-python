@@ -105,6 +105,7 @@ def empty(dataframe, count=False):
 #        print("Row sum:", sum(row))
         if sum(row) == 0:
             numemptyrows += 1
+#            emptyOTU = dataframe[rowindex][0]
             emptyrowids.append(rowindex)
     # Figure out which columns are empty and collect their indexes
     for colindex in range(1,numcols+1):
@@ -116,6 +117,7 @@ def empty(dataframe, count=False):
 #        print("Column sum:", sum(col))
         if sum(col) == 0:
             numemptycols += 1
+#            emptypred = dataframe[0][colindex]
             emptycolids.append(colindex)
     print("Found empty rows:", emptyrowids)
     print("Found empty cols:", emptycolids)
@@ -220,11 +222,13 @@ def extinction(dataframe, participant, method):
         print("Column indexes, sorted by column sum:")
         print(colseq)
         if participant == "lower":
-            print("Making row",rowseq[0],"extinct")
+            emptyOTU = dataframe[rowseq[0]][0]
+            print("Making OTU",emptyOTU,"on row",rowseq[0],"extinct")
             for colindex in range(1,numcols+1):
                 dataframe[rowseq[0]][colindex] = 0
         elif participant == "higher":
-            print("Making column",colseq[0],"extinct")
+            emptypred = dataframe[0][colseq[0]]
+            print("Making predator",emptypred,"on col",colseq[0],"extinct")
             for rowindex in range(1,numrows+1):
                 dataframe[rowindex][colseq[0]] = 0
         elif participant == "both":
