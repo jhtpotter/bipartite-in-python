@@ -238,11 +238,9 @@ def extinction(dataframe, participant, method):
                 if random.randint(0,1) == 0:
                     for colindex in range(1,numcols+1):
                         dataframe[rowseq[0]][colindex] = 0
-                elif random.randint(0,1) == 1:
+                else:
                     for rowindex in range(1,numrows+1):
                         dataframe[rowindex][colseq[0]] = 0
-                else:
-                    sys.exit("Error")
             else:
                 sys.exit("Error")
         else:
