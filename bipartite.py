@@ -6,7 +6,8 @@ import random
 import string
 import re
 
-infile = open("Example_OTUs.csv", "r")
+#infile = open("Example_OTUs.csv", "r")
+infile = open("Texas_data.csv","r")
 #infile.readline()
 exampleOTUs = []
 for idx, line in enumerate(infile):
@@ -14,6 +15,9 @@ for idx, line in enumerate(infile):
 #    row.pop(0)
     if idx != 0:
         row[1:] = list(map(int, row[1:]))
+        for indx in range(1,len(row)):
+            if row[indx] >= 2:
+                row[indx] = 1
 #    print(row)
     exampleOTUs.append(row)
 
@@ -51,7 +55,7 @@ def eval_df(dataframe, taxadict):
         print("Number of prey species currently in dictionary for this predator:",preybreadth)
         for rowindex in range(1, len(dataframe)):
             preyOTU = dataframe[rowindex][0]
-            print("Prey name:",preyOTU)
+#            print("Prey name:",preyOTU)
             interactionval = dataframe[rowindex][colindex]
             if interactionval == 1:
                 col.append(interactionval)
@@ -144,7 +148,7 @@ def empty(dataframe, count=False):
 ##################################################
 # Define function: extinction
 
-def extinction(dataframe, participant, method):
+def extinction(dataframe, participant, method, interactiondict, switchdict, extOTUdict):
     numcols = len(dataframe[0])-1
     numrows = len(dataframe)-1
     rowsums = []
@@ -198,10 +202,10 @@ def extinction(dataframe, participant, method):
         headerrow = dataframe.pop(0)
         random.shuffle(dataframe)
         dataframe.insert(0, headerrow)
-        for line in dataframe:
-            print(line)
-        print("This is a re-shuffled dataframe")
-        input("Press enter to continue")
+#        for line in dataframe:
+#            print(line)
+#        print("This is a re-shuffled dataframe")
+#        input("Press enter to continue")
         # Caculate new row/column sums of shuffled dataframe
         for rowindex in range(1,numrows+1):
             row = dataframe[rowindex][1:]
@@ -222,13 +226,31 @@ def extinction(dataframe, participant, method):
         print("Column indexes, sorted by column sum:")
         print(colseq)
         if participant == "lower":
-            emptyOTU = dataframe[rowseq[0]][0]
-            print("Making OTU",emptyOTU,"on row",rowseq[0],"extinct")
+            expreyidx = rowseq[0]
+            extOTU = dataframe[expreyidx][0]
+            if extOTU in extOTUdict:
+                sys.exit("Error, prey already made extinct")
+            else:
+                extOTUdict[extOTU] = 1
+            print("Making OTU",extOTU,"on row",expreyidx,"extinct")
             for colindex in range(1,numcols+1):
-                dataframe[rowseq[0]][colindex] = 0
+                cpreda = dataframe[0][colindex]
+                nonpreyidxs = [idx for idx in range(1,len(dataframe)) if (dataframe[idx][colindex] == 0 and dataframe[idx][0] not in extOTUdict)]
+#                print("Current predator,",cpreda,"does not feed on non-extinct prey species in rows:",nonpreyidxs, ". Total:", (len(dataframe)-1) - len(nonpreyidxs), interactiondict[cpreda][0])
+                if switchdict[cpreda] == "switcher" and len(nonpreyidxs) > 0:
+                    print("This predator is a switcher")
+                    newprey = nonpreyidxs[random.randint(0,len(nonpreyidxs)-1)]
+                    if dataframe[newprey][colindex] == 0:
+                        dataframe[newprey][colindex] = 1
+                    else:
+                        sys.exit("Error, unexpected interaction found")
+                dataframe[expreyidx][colindex] = 0
+#            for key, val in extOTUdict.items():
+#                print(key, val)
         elif participant == "higher":
-            emptypred = dataframe[0][colseq[0]]
-            print("Making predator",emptypred,"on col",colseq[0],"extinct")
+            expredidx = colseq[0]
+            extpred = dataframe[0][expredidx]
+            print("Making predator",extpred,"on col",expredidx,"extinct")
             for rowindex in range(1,numrows+1):
                 dataframe[rowindex][colseq[0]] = 0
         elif participant == "both":
@@ -285,16 +307,22 @@ def secondextinction(dataframe, participant, method):
     print("Number of rows:",numrows)
     input("Press enter to continue")
     interactiondict = {}
+    switchdict = {}
+    extOTUdict = {}
     predatorlist = dataframe[0][1:]
     print("Starting predator list:",predatorlist)
     numpreds = len(predatorlist)
     for colindex in range(1, numpreds + 1):
         predator = predatorlist[colindex-1]
 #        print("Predator:",predator)
-        if predator in interactiondict:
+        if predator in interactiondict or predator in switchdict:
             sys.exit("Error, predator already in dictionary")
         else:
             interactiondict[predator] = [0]
+            if random.randint(0,1) == 0:
+                switchdict[predator] = "non_switcher"
+            else:
+                switchdict[predator] = "switcher"
         for rowindex in range(1, len(dataframe)):
             preyOTU = dataframe[rowindex][0]
 #            print("Prey name:",preyOTU)
@@ -312,9 +340,9 @@ def secondextinction(dataframe, participant, method):
                 continue
             else:
                 sys.exit("Error, non-binary interaction value found")
-    for key, vals in interactiondict.items():
-        print(key, ":", vals)
-    input("Press enter to continue.\n")
+#    for key, vals in interactiondict.items():
+#        print(key, ":", vals)
+#    input("Press enter to continue.\n")
     participants = ("lower", "higher", "both")
     methods = ("random", "abundance", "degree")
     while participant not in participants:
@@ -329,17 +357,17 @@ def secondextinction(dataframe, participant, method):
         i = 1
         while repz:
             # Run extinction() to kill off one taxon
-            currentdf = extinction(dataframe=osDF, participant=osParticipant, method=osMethod)
+            currentdf = extinction(dataframe=osDF, participant=osParticipant, method=osMethod, interactiondict=currentdict, switchdict=switchdict, extOTUdict=extOTUdict)
             for line in currentdf:
                 print(line)
             print("Above is the dataframe after running extinction().")
-            input("Press enter to continue")
+#            input("Press enter to continue")
             # Re-evaluate interaction dictionary
             currentdict = eval_df(dataframe=currentdf, taxadict=currentdict)
-            for key, vals in currentdict.items():
-                print(key, ":", vals)
-            print("Above is your updated dictionary.")
-            input("Press enter to continue")
+#            for key, vals in currentdict.items():
+#                print(key, ":", vals)
+#            print("Above is your updated dictionary.")
+#            input("Press enter to continue")
             # Run empty() to clean up dataframe
             osDF, emptyoutput = empty(currentdf, count=True)
             for line in osDF:
@@ -354,7 +382,7 @@ def secondextinction(dataframe, participant, method):
             numrows = len(osDF)-1
             print("Number of columns:",numcols)
             print("Number of rows:",numrows)
-            input("Press enter to continue.\n")
+#            input("Press enter to continue.\n")
             if osParticipant == "lower" and numrows < 2:
                 break
             if osParticipant == "higher" and numcols < 2:
@@ -371,6 +399,8 @@ def secondextinction(dataframe, participant, method):
 #            print(line)
         return dead2
     seOutput = onesecondextinction(osDataframe=dataframe, osParticipant=participant, osMethod=method, currentdict=interactiondict)
+    for key, val in switchdict.items():
+        print(key,":", val)
     return seOutput
 
 myoutput = secondextinction(dataframe=exampleOTUs,participant="lower",method="abundance")
