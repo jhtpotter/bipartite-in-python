@@ -15,9 +15,11 @@ for idx, line in enumerate(infile):
 #    row.pop(0)
     if idx != 0:
         row[1:] = list(map(int, row[1:]))
-        for indx in range(1,len(row)):
-            if row[indx] >= 2:
-                row[indx] = 1
+        row[1:] = [1 if val >= 2 else val for val in row[1:]]
+        print(row)
+#        for indx in range(1,len(row)):
+#            if row[indx] >= 2:
+#                row[indx] = 1
 #    print(row)
     exampleOTUs.append(row)
 
