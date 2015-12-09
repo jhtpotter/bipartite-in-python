@@ -23,6 +23,8 @@ for idx, line in enumerate(infile):
 #    print(row)
     exampleOTUs.append(row)
 
+#print(line for line in exampleOTUs)
+
 #for line in exampleOTUs:
 #    print(line)
 
