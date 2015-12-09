@@ -44,17 +44,17 @@ def unshared_copy(inList):
 
 def eval_df(dataframe, taxadict):
     predatorlist = dataframe[0][:]
-    print("Predator list:",predatorlist)
+#    print("Predator list:",predatorlist)
     for colindex in range(1, len(predatorlist)):
         col = []
         predator = predatorlist[colindex]
-        print("Predator:",predator)
+#        print("Predator:",predator)
         preygained = 0
         preylost = 0
         if predator not in taxadict:
             sys.exit("Error, predator not found in dictionary.")
         preybreadth = len(taxadict[predator]) - 1
-        print("Number of prey species currently in dictionary for this predator:",preybreadth)
+#        print("Number of prey species currently in dictionary for this predator:",preybreadth)
         for rowindex in range(1, len(dataframe)):
             preyOTU = dataframe[rowindex][0]
 #            print("Prey name:",preyOTU)
@@ -125,8 +125,8 @@ def empty(dataframe, count=False):
             numemptycols += 1
 #            emptypred = dataframe[0][colindex]
             emptycolids.append(colindex)
-    print("Found empty rows:", emptyrowids)
-    print("Found empty cols:", emptycolids)
+#    print("Found empty rows:", emptyrowids)
+#    print("Found empty cols:", emptycolids)
     emptyrowids.sort(reverse=True)
     emptycolids.sort(reverse=True)
     # Get rid of empty rows
@@ -170,7 +170,7 @@ def extinction(dataframe, participant, method, interactiondict, switchdict, extO
         # Randomly pick a participant:
         partindex = random.randint(0,1)
         participant = participants[partindex]
-        print("Participant is now:",participant)
+#        print("Participant is now:",participant)
     if method == "random":
         rowextin = random.randint(1,numrows)
         colextin = random.randint(1,numcols)
@@ -187,7 +187,7 @@ def extinction(dataframe, participant, method, interactiondict, switchdict, extO
         randomcolorder = list(range(1,numcols+1))
         random.shuffle(randomcolorder)
         randomcolorder = [0] + randomcolorder
-        print("Randomised column order:", randomcolorder)
+#        print("Randomised column order:", randomcolorder)
         for rowindex in range(0,numrows+1):
             newrow = []
             for randomcol in randomcolorder:
@@ -219,14 +219,14 @@ def extinction(dataframe, participant, method, interactiondict, switchdict, extO
                 col.append(dataframe[rowindex][colindex])
             colsum = sum(col)
             colsums.append(colsum)
-        print("Row sums:", rowsums)
-        print("Column sums:", colsums)
+#        print("Row sums:", rowsums)
+#        print("Column sums:", colsums)
         rowseq = [i[0]+1 for i in sorted(enumerate(rowsums), key=lambda x:x[1])]
-        print("Row indexes, sorted by row sum:")
-        print(rowseq)
+#        print("Row indexes, sorted by row sum:")
+#        print(rowseq)
         colseq = [i[0]+1 for i in sorted(enumerate(colsums), key=lambda x:x[1])]
-        print("Column indexes, sorted by column sum:")
-        print(colseq)
+#        print("Column indexes, sorted by column sum:")
+#        print(colseq)
         if participant == "lower":
             expreyidx = rowseq[0]
             extOTU = dataframe[expreyidx][0]
@@ -234,13 +234,13 @@ def extinction(dataframe, participant, method, interactiondict, switchdict, extO
                 sys.exit("Error, prey already made extinct")
             else:
                 extOTUdict[extOTU] = 1
-            print("Making OTU",extOTU,"on row",expreyidx,"extinct")
+#            print("Making OTU",extOTU,"on row",expreyidx,"extinct")
             for colindex in range(1,numcols+1):
                 cpreda = dataframe[0][colindex]
                 nonpreyidxs = [idx for idx in range(1,len(dataframe)) if (dataframe[idx][colindex] == 0 and dataframe[idx][0] not in extOTUdict)]
 #                print("Current predator,",cpreda,"does not feed on non-extinct prey species in rows:",nonpreyidxs, ". Total:", (len(dataframe)-1) - len(nonpreyidxs), interactiondict[cpreda][0])
                 if switchdict[cpreda] == "switcher" and len(nonpreyidxs) > 0:
-                    print("This predator is a switcher")
+#                    print("This predator is a switcher")
                     newprey = nonpreyidxs[random.randint(0,len(nonpreyidxs)-1)]
                     if dataframe[newprey][colindex] == 0:
                         dataframe[newprey][colindex] = 1
@@ -252,7 +252,7 @@ def extinction(dataframe, participant, method, interactiondict, switchdict, extO
         elif participant == "higher":
             expredidx = colseq[0]
             extpred = dataframe[0][expredidx]
-            print("Making predator",extpred,"on col",expredidx,"extinct")
+#            print("Making predator",extpred,"on col",expredidx,"extinct")
             for rowindex in range(1,numrows+1):
                 dataframe[rowindex][colseq[0]] = 0
         elif participant == "both":
@@ -358,11 +358,12 @@ def secondextinction(dataframe, participant, method):
         repz = True
         i = 1
         while repz:
+            print(i)
             # Run extinction() to kill off one taxon
             currentdf = extinction(dataframe=osDF, participant=osParticipant, method=osMethod, interactiondict=currentdict, switchdict=switchdict, extOTUdict=extOTUdict)
-            for line in currentdf:
-                print(line)
-            print("Above is the dataframe after running extinction().")
+#            for line in currentdf:
+#                print(line)
+#            print("Above is the dataframe after running extinction().")
 #            input("Press enter to continue")
             # Re-evaluate interaction dictionary
             currentdict = eval_df(dataframe=currentdf, taxadict=currentdict)
@@ -372,9 +373,9 @@ def secondextinction(dataframe, participant, method):
 #            input("Press enter to continue")
             # Run empty() to clean up dataframe
             osDF, emptyoutput = empty(currentdf, count=True)
-            for line in osDF:
-                print(line)
-            print("Above is the dataframe after clearing with empty().")
+#            for line in osDF:
+#                print(line)
+#            print("Above is the dataframe after clearing with empty().")
             if not len(emptyoutput) == 2:
                 print(emptyoutput)
                 sys.exit("Error, output from function empty() not of correct length")
@@ -382,8 +383,8 @@ def secondextinction(dataframe, participant, method):
             dead.append(deadrow)
             numcols = len(osDF[0])-1
             numrows = len(osDF)-1
-            print("Number of columns:",numcols)
-            print("Number of rows:",numrows)
+#            print("Number of columns:",numcols)
+#            print("Number of rows:",numrows)
 #            input("Press enter to continue.\n")
             if osParticipant == "lower" and numrows < 2:
                 break
@@ -401,8 +402,8 @@ def secondextinction(dataframe, participant, method):
 #            print(line)
         return dead2
     seOutput = onesecondextinction(osDataframe=dataframe, osParticipant=participant, osMethod=method, currentdict=interactiondict)
-    for key, val in switchdict.items():
-        print(key,":", val)
+#    for key, val in switchdict.items():
+#        print(key,":", val)
     return seOutput
 
 myoutput = secondextinction(dataframe=exampleOTUs,participant="lower",method="abundance")
