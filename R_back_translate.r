@@ -57,7 +57,9 @@ empty <- function(df, count=FALSE){
   numemptycols = 0
   numemptyrows = 0
   emptycolIDs = which(colSums(df)==0)
+  print(emptycolIDs)
   emptyrowIDs = which(rowSums(df)==0)
+  print(emptyrowIDs)
   df <- df[,!emptycolIDS]
   df <- df[!emptyrowIDs,]
   for (i in 1:numrows){
