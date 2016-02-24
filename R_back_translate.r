@@ -175,7 +175,7 @@ extinction <- function(df, participant, method, interactionDict, switchDict, ext
         next()
       }
       else {
-        extOTUdict <- c(extOTUdict, extOTU=1)
+        extOTUdict[[extOTU]] <- 1
       }
       for (i in 1:ncol(df)){
         currentPredator <- colnames(df)[i]
@@ -232,10 +232,30 @@ extinction <- function(df, participant, method, interactionDict, switchDict, ext
       df[,colExtin] <- 0
     }
   }
+  return(df)
 }
 
+secondExtinction <- function(df, participant, method){
+  interactionDict <- list()
+  switchDict <- list()
+  extOTUDict <- list()
+  predatorVec <- colnames(df)
+  numPreds <- length(predatorVec)
+  for (i in 1:numPreds){
+    predator <- predatorVec[i]
+    print(predator)
+    if (predator %in% names(interactionDict) || predator %in% names(switchDict)){
+      # INSERT DIE STATEMENT
+      next()
+    } else {
+      interactionDict[[predator]] <- 0
+#      interactionDict <- c(interactionDict, predator=0)
+    }
+  }
+  print(interactionDict)
+}
 
-
+secondExtinction(df = web)
 
 
 
