@@ -236,6 +236,7 @@ extinction <- function(df, participant, method, interactionDict, switchDict, ext
 }
 
 secondExtinction <- function(df, participant, method){
+  library(stringr)
   interactionDict <- list()
   switchDict <- list()
   extOTUDict <- list()
@@ -243,19 +244,55 @@ secondExtinction <- function(df, participant, method){
   numPreds <- length(predatorVec)
   for (i in 1:numPreds){
     predator <- predatorVec[i]
-    print(predator)
-    if (predator %in% names(interactionDict) || predator %in% names(switchDict)){
+    print(paste0("Predator: ",predator))
+    if ((predator %in% names(interactionDict)) || (predator %in% names(switchDict))){
+      print("ERROR PREDATOR ALREADY IN DICTIONARY")
       # INSERT DIE STATEMENT
       next()
     } else {
-      interactionDict[[predator]] <- 0
+      print("Initialising interaction dictionary")
+      interactionDict[[predator]] <- as.character("0")
 #      interactionDict <- c(interactionDict, predator=0)
+      if (sample(1:2,1)==1){
+        switchDict[[predator]] <- "non_switcher"
+      } else {
+        switchDict[[predator]] <- "switcher"
+      }
+    }
+    for (j in 1:nrow(df)){
+      preyOTU <- rownames(df)[j]
+      print(paste0("Prey: ",preyOTU))
+      interactionVal <- df[j,i]
+      print(paste0("Binary interaction: ",interactionVal))
+      if (interactionVal == 1){
+        if (!(predator %in% names(interactionDict))){
+          print("ERROR PREDATOR NOT IN INTERACTION DICTIONARY")
+          # INSERT DIE STATEMENT
+          next()
+        } else {
+          print(paste0("Current interaction dictionary contains: ",interactionDict[[predator]]))
+          print(sum(str_count(interactionDict[[predator]], preyOTU)))
+          if (sum(str_count(interactionDict[[predator]], preyOTU)) != 0){
+            # INSERT DIE STATEMENT
+            next()
+          } else {
+            interactionDict[[predator]] <- c(interactionDict[[predator]], preyOTU)
+            interactionDict[[predator]][1] <- as.character(as.integer(interactionDict[[predator]][1]) + 1)
+          }
+        }
+      }
     }
   }
   print(interactionDict)
+  return(interactionDict)
 }
 
-secondExtinction(df = web)
-
-
-
+library(stringr)
+newList <- secondExtinction(df = web)
+web[1,1]==1
+newList$BAT0001 <- c(newList$BAT0001, "PREY1")
+prey <- "PREY1"
+prey
+str(newList$BAT0001)
+sum(str_count(newList$BAT0001, prey))
+newList
