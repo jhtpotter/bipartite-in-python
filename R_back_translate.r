@@ -38,11 +38,14 @@ extOTUDict$"NEWBAT"
 "NEWBAT" %in% names(extOTUDict)
 
 
+
+
+
 eval_df <- function(df, taxaDict){
   predators <- colnames(df)
-  print("predators:", predators)
+  print(paste0("Predators: ", predators))
   preyOTUs <- rownames(df)
-  print("prey OTUs:", preyOTUs)
+  print(paste0("Prey OTUs: ", preyOTUs))
   for (i in 1:ncol(df)){
     colValues <- numeric()
     predator <- predators[i]
@@ -52,27 +55,27 @@ eval_df <- function(df, taxaDict){
       # INSERT DIE STATEMENT
       next()
     }
-    preyBreadth <- length(taxaDict$predator) - 1
+    preyBreadth <- length(taxaDict[[predator]]) - 1
     for (j in 1:nrow(df)){
-      preyOTU <- preyOTU[j]
+      preyOTU <- rownames(df)[j]
       interactionVal <- df[j, i]
       if (interactionVal == 1){
-        append(colValues, interactionVal)
-        if (length(which(taxadict$predator==preyOTU)) == 0){
-          append(taxadict$predator,preyOTU)
+        colValues <- append(colValues, interactionVal)
+        if (length(which(taxaDict[[predator]]==preyOTU)) == 0){
+          taxaDict[[predator]] <- append(taxaDict[[predator]],preyOTU)
           preyGained <- preyGained + 1
-        } else if (length(which(taxadict$predator==preyOTU)) == 1){
+        } else if (length(which(taxaDict[[predator]]==preyOTU)) == 1){
           next()
         } else {
           # INSERT DIE STATEMENT
           next()
         }
       } else if (interactionVal == 0){
-        append(colValues, interactionVal)
-        if (length(which(taxadict$predator==preyOTU)) == 0){
+        colValues <- append(colValues, interactionVal)
+        if (length(which(taxaDict[[predator]]==preyOTU)) == 0){
           next()
-        } else if (length(which(taxadict$predator==preyOTU)) == 1){
-          taxadict$predator <- taxadict$predator[taxadict$predator != preyOTU]
+        } else if (length(which(taxaDict[[predator]]==preyOTU)) == 1){
+          taxaDict[[predator]] <- taxaDict[[predator]][taxaDict[[predator]] != preyOTU]
           preyLost <- preyLost + 1
         } else {
           # INSERT DIE STATEMENT
@@ -84,7 +87,7 @@ eval_df <- function(df, taxaDict){
       }
     }
     colValSum <- sum(colValues)
-    if (colValSum != length(taxadict$predator) - 1){
+    if (colValSum != length(taxaDict[[predator]]) - 1){
       # INSERT DIE STATEMENT
       next()
     }
@@ -92,9 +95,12 @@ eval_df <- function(df, taxaDict){
       # INSERT DIE STATEMENT
       next()
     }
-    taxadict$predator[1] <- colValSum
+    taxaDict[[predator]][1] <- colValSum
   }
+  return(taxaDict)
 }
+
+
 
 
 
@@ -124,7 +130,14 @@ empty <- function(df, count=FALSE){
   for (i in 1:numrows){
     row <- df[i,]
   }
+  emptyOut <- list(df,c(numEmptyRows,numEmptyCols))
+  names(emptyOut) <- c(emptiedDF,emptyInfo)
+  return(emptyOut)
 }
+
+
+
+
 
 extinction <- function(df, participant, method, interactionDict, switchDict, extOTUdict){
   numCols <-  ncol(df)
@@ -235,7 +248,12 @@ extinction <- function(df, participant, method, interactionDict, switchDict, ext
   return(df)
 }
 
-secondExtinction <- function(df, participant, method){
+
+
+
+
+
+second_extinction <- function(df, participant, method){
   library(stringr)
   interactionDict <- list()
   switchDict <- list()
@@ -273,6 +291,7 @@ secondExtinction <- function(df, participant, method){
           print(paste0("Current interaction dictionary contains: ",interactionDict[[predator]]))
           print(sum(str_count(interactionDict[[predator]], preyOTU)))
           if (sum(str_count(interactionDict[[predator]], preyOTU)) != 0){
+            print("ERROR PREY ALREADY FOUND UNDER PREDATOR LOOKUP")
             # INSERT DIE STATEMENT
             next()
           } else {
@@ -280,15 +299,74 @@ secondExtinction <- function(df, participant, method){
             interactionDict[[predator]][1] <- as.character(as.integer(interactionDict[[predator]][1]) + 1)
           }
         }
+      } else if (interactionVal == 0){
+        next()
+      } else {
+        print("ERROR NON BINARY INTERACTION VALUE FOUND")
+        # INSERT DIE STATEMENT
+        next()
       }
     }
   }
   print(interactionDict)
   return(interactionDict)
+  participants = c("lower", "higher", "both")
+  extinMethods = c("random", "abundance", "degree")
+  while (!(participant %in% participants)){
+    # GET INPUT
+    participant <- "lower"
+  }
+  while (!(method %in% extinMethods)){
+    # GET INPUT
+    method <- "abundance"
+  }
+  one_second_extinction <- function(osDF, osParticipant, osMethod, currentDict){
+    dead <- matrix(nrow=0,ncol=3)
+    colnames(dead) <- c("")
+    repz = TRUE
+    i = 1
+    while (repz){
+      print(i)
+      currentDF <- extinction(df=osDF, participant=osParticipant, method=osMethod, interactionDict=currentDict, switchDict=switchDict, extOTUdict=extOTUDict)
+      currentDict <- eval_df(df=currentDF, taxaDict=currentDict)
+      emptyOutList <- empty(df=currentDF, count=TRUE)
+      osDF <- emptyOutList$emptiedDF
+      emptyOutput <- emptyOutList$emptyInfo
+      if (length(emptyOutput)!=2){
+        print("ERROR OUTPUT FROM FUNCTION EMPTY() NOT OF CORRECT SIZE")
+        # INSERT DIE STATEMENT
+        next()
+      }
+      deadrow = c(i, emptyOutput)
+      dead <- rbind(dead,deadrow)
+      numCols <- ncol(osDF)
+      numRows <- nrow(osDF)
+      if (osParticipant == "lower" && numRows < 2){
+        break()
+      }
+      if (osParticipant == "higher" && numCols < 2){
+        break()
+      }
+      if (osParticipant == "both" && (numRows < 2 || numCols < 2)){
+        break()
+      }
+      if (numRows <= 1 || numCols <= 1){
+        break()
+      }
+      i <- i + 1
+    }
+    dead2 <- dead
+    deadRows <- nrow(dead)
+    dead2 <- rbind(dead2, c(deadRows, numCols, numRows))
+    return(dead2)
+  }
+  seOutput <- one_second_extinction(osDF=df, osParticipant=participant, osMethod=method, currentDict=interactionDict)
+  return(seOutput)
 }
 
 library(stringr)
-newList <- secondExtinction(df = web)
+exampleDF[1,1] <- 50
+newList <- second_extinction(df = web)
 web[1,1]==1
 newList$BAT0001 <- c(newList$BAT0001, "PREY1")
 prey <- "PREY1"
@@ -296,3 +374,8 @@ prey
 str(newList$BAT0001)
 sum(str_count(newList$BAT0001, prey))
 newList
+predator <- "BAT0001"
+append(newList[[predator]], "YOLO")
+which(newList[[predator]] == "OTU_42")
+#taxaDict[[predator]] <- taxaDict[[predator]][taxaDict[[predator]] != preyOTU]
+newList[[predator]][newList[[predator]] != "OTU_42"]
