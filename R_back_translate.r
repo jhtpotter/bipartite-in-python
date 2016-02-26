@@ -5,37 +5,37 @@ exampleDF <- read.csv("Example_OTUs.csv")
 rownames(exampleDF) <- exampleDF[,1]
 exampleDF<-exampleDF[,-1]
 
-web<-exampleDF#[,1]
-colSums(web)
-cempty <- which(colSums(web)==0)
-cempty
-web>0
-sum(web>0)
+#web<-exampleDF#[,1]
+#colSums(web)
+#cempty <- which(colSums(web)==0)
+#cempty
+#web>0
+#sum(web>0)
 
-colSumVec <- colSums(web)
-colSumVec
-order(colSumVec)
-min(colSumVec)
-minCol <- which(colSumVec == min(colSumVec))
-minCol
-minRow <- which(rowSumVec == min(rowSumVec))
-print(minCol,minRow)
+#colSumVec <- colSums(web)
+#colSumVec
+#order(colSumVec)
+#min(colSumVec)
+#minCol <- which(colSumVec == min(colSumVec))
+#minCol
+#minRow <- which(rowSumVec == min(rowSumVec))
+#print(minCol,minRow)
 
-rowSumVec <- rowSums(df)
-colSumVec <- colSums(df)
-rowSeq <- order(rowSums(df))
-colSeq <- order(colSums(df))
-minCol <- which(colSumVec == min(colSumVec))
-minRow <- which(rowSumVec == min(rowSumVec))
+#rowSumVec <- rowSums(df)
+#colSumVec <- colSums(df)
+#rowSeq <- order(rowSums(df))
+#colSeq <- order(colSums(df))
+#minCol <- which(colSumVec == min(colSumVec))
+#minRow <- which(rowSumVec == min(rowSumVec))
 
-extOTUDict <- as.list(c(0,0,0,0))
-extOTUDict
-rownames(web)
-rownames(web)[3]
-names(extOTUDict) <- colnames(web)[1:4]
-extOTUDict <- c(extOTUDict, "NEWBAT"=1)
-extOTUDict$"NEWBAT"
-"NEWBAT" %in% names(extOTUDict)
+#extOTUDict <- as.list(c(0,0,0,0))
+#extOTUDict
+#rownames(web)
+#rownames(web)[3]
+#names(extOTUDict) <- colnames(web)[1:4]
+#extOTUDict <- c(extOTUDict, "NEWBAT"=1)
+#extOTUDict$"NEWBAT"
+#"NEWBAT" %in% names(extOTUDict)
 
 
 pause <- function(){
@@ -45,17 +45,17 @@ pause <- function(){
 
 eval_df <- function(df, taxaDict){
   print("Running function eval_df()")
-  pause()
+#  pause()
   predators <- colnames(df)
   cat("Predators: ", predators)
   preyOTUs <- rownames(df)
   cat("Prey OTUs: ", preyOTUs)
-  pause()
+#  pause()
   for (i in 1:ncol(df)){
     colValues <- numeric()
     predator <- predators[i]
     cat("Current predator: ", predator)
-    pause()
+#    pause()
     preyGained <- 0
     preyLost <- 0
     if (!(predator %in% names(taxaDict))){
@@ -70,7 +70,7 @@ eval_df <- function(df, taxaDict){
       cat("Current OTU: ", preyOTU)
       interactionVal <- df[j, i]
       cat("Interaction in df: ", interactionVal)
-      pause()
+#      pause()
       if (interactionVal == 1){
         colValues <- append(colValues, interactionVal)
         if (length(which(taxaDict[[predator]]==preyOTU)) == 0){
@@ -119,17 +119,14 @@ eval_df <- function(df, taxaDict){
     }
     taxaDict[[predator]][1] <- colValSum
   }
-  pause()
+#  pause()
   return(taxaDict)
 }
 
 
-
-
-
 empty <- function(df, count=FALSE){
   print("Running function empty()")
-  pause()
+#  pause()
   numCols <- ncol(df)
   numrows <- nrow(df)
   numEmptyCols <- 0
@@ -146,23 +143,21 @@ empty <- function(df, count=FALSE){
     nonemptyRowIdxs <- (1:nrow(df))[-emptyRowIdxs]
   }
   if (numEmptyCols == 0){
-    nonEmptyColIdxs <- 1:ncol(df)
+    nonemptyColIdxs <- 1:ncol(df)
   } else {
-    nonEmptyColIdxs <- (1:ncol(df))[-emptyColIdxs]
+    nonemptyColIdxs <- (1:ncol(df))[-emptyColIdxs]
   }
-  df <- df[!emptyRowIdxs,!emptyColIdxs]
-  emptyOut <- list(df,c(numEmptyRows,numEmptyCols))
-  names(emptyOut) <- c(emptiedDF,emptyInfo)
+  df <- df[nonemptyRowIdxs,nonemptyColIdxs]
+  emptyNumbers <- c(numEmptyRows, numEmptyCols)
+  emptyOut <- list(df, emptyNumbers)
+  names(emptyOut) <- c("emptiedDF","emptyInfo")
   return(emptyOut)
 }
 
 
-
-
-
 extinction <- function(df, participant, method, interactionDict, switchDict, extOTUDict){
   print("Running function extinction")
-  pause()
+#  pause()
   numCols <-  ncol(df)
   numrows <- nrow(df)
   rowSumVec <- rowSums(df)
@@ -195,7 +190,7 @@ extinction <- function(df, participant, method, interactionDict, switchDict, ext
     colSumVec <- numeric()
     print("Randomly shuffling dataframe")
     df <- df[sample(1:nrow(df),nrow(df)),sample(1:ncol(df),ncol(df))]
-    pause()
+#    pause()
     rowSeq <- order(rowSums(df))
     colSeq <- order(colSums(df))
     extOTUIdx <- rowSeq[1]
@@ -209,7 +204,7 @@ extinction <- function(df, participant, method, interactionDict, switchDict, ext
       # INSERT DIE STATEMENT
       next()
     }
-    print(minCol,minRow)
+    cat(minCol,minRow,"\n")
     if (participant == "lower"){
       extOTU <- rownames(df)[extOTUIdx]
       cat("Making ", extOTU, " extinct\n")
@@ -224,38 +219,42 @@ extinction <- function(df, participant, method, interactionDict, switchDict, ext
       }
       for (i in 1:ncol(df)){
         currentPredator <- colnames(df)[i]
+        print(df[,i])
         nonPreyIdxs <- which(df[,i]==0)
+        cat("Indexes of OTUs for which interaction is 0: ",nonPreyIdxs, "\n")
         validNewPrey <- numeric()
-        for (k in 1:length(nonPreyIdxs)){
-          if (!(rownames(df)[nonPreyIdxs[k]] %in% names(extOTUDict))){
-            validNewPrey <- append(validNewPrey, nonPreyIdxs[k])
-          } else {
-            cat("OTU ", rownames(df)[nonPreyIdxs[k]], " already extinct\n")
-            pause()
+        if (length(nonPreyIdxs) > 0){
+          for (k in 1:length(nonPreyIdxs)){
+            cat("Non prey index: ",nonPreyIdxs[k],"\n")
+            cat("Motu: ",rownames(df)[nonPreyIdxs[k]], "\n")
+            if (!(rownames(df)[nonPreyIdxs[k]] %in% names(extOTUDict))){
+              validNewPrey <- append(validNewPrey, nonPreyIdxs[k])
+            } else {
+              cat("OTU ", rownames(df)[nonPreyIdxs[k]], " already extinct\n")
+            }
           }
         }
         cat("Potential new prey species: ", validNewPrey, "\n")
-        pause()
         if (switchDict[[currentPredator]] == "switcher" && length(validNewPrey) > 0){
           print("Predator is a switcher")
           print("Randomly selecting a new OTU/prey")
           newPrey <- validNewPrey[sample(1:length(validNewPrey),1)]
           cat("New prey: ", rownames(df)[newPrey], " at index: ", newPrey, "\n")
-          if (df$newPrey[i] == 0){
+#          pause()
+          if (df[newPrey, i] == 0){
             print("Changing 0 to 1 in df")
-            df$newPrey[i] <- 1
+            df[newPrey, i] <- 1
           } else {
             print("ERROR POSITIVE INTERACTION ALREADY FOUND FOR THIS OTU")
             # INSERT DIE STATEMENT
             next()
           }
-          pause()
         }
       }
       # this line actually sets the value at the row corresponding to the extincted prey species to 0
       print("Making prey extinct")
       df[extOTUIdx,] <- 0
-      pause()
+#      pause()
     } else if (participant == "higher"){
       extPred <- colnames(df)[extPredIdx]
       df[,extPredIdx] <- 0
@@ -298,10 +297,6 @@ extinction <- function(df, participant, method, interactionDict, switchDict, ext
 }
 
 
-
-
-
-
 second_extinction <- function(df, participant, method){
   library(stringr)
   interactionDict <- list()
@@ -312,7 +307,7 @@ second_extinction <- function(df, participant, method){
   for (i in 1:numPreds){
     predator <- predatorVec[i]
     cat("Predator: ", predator, "\n")
-    pause()
+#    pause()
     if ((predator %in% names(interactionDict)) || (predator %in% names(switchDict))){
       print("ERROR PREDATOR ALREADY IN DICTIONARY")
       pause()
@@ -328,7 +323,7 @@ second_extinction <- function(df, participant, method){
         print("Randomly making predator a switcher")
         switchDict[[predator]] <- "switcher"
       }
-      pause()
+#      pause()
     }
     for (j in 1:nrow(df)){
       preyOTU <- rownames(df)[j]
@@ -343,7 +338,6 @@ second_extinction <- function(df, participant, method){
           next()
         } else {
           cat("Current interaction dictionary contains: ", interactionDict[[predator]], "\n")
-          pause()
           if (sum(str_count(interactionDict[[predator]], preyOTU)) != 0){
             print("ERROR PREY ALREADY FOUND UNDER PREDATOR LOOKUP")
             pause()
@@ -384,6 +378,8 @@ second_extinction <- function(df, participant, method){
       currentDF <- extinction(df=osDF, participant=osParticipant, method=osMethod, interactionDict=currentDict, switchDict=switchDict, extOTUDict=extOTUDict)
       currentDict <- eval_df(df=currentDF, taxaDict=currentDict)
       emptyOutList <- empty(df=currentDF, count=TRUE)
+      str(emptyOutList)
+      print(emptyOutList)
       osDF <- emptyOutList$emptiedDF
       emptyOutput <- emptyOutList$emptyInfo
       if (length(emptyOutput)!=2){
@@ -410,26 +406,30 @@ second_extinction <- function(df, participant, method){
       i <- i + 1
     }
     dead2 <- dead
-    deadRows <- nrow(dead)
-    dead2 <- rbind(dead2, c(deadRows, numCols, numRows))
+    deadRows <- nrow(dead)+1
+    dead2 <- rbind(dead2, c(deadRows, numRows, numCols))
     return(dead2)
   }
   seOutput <- one_second_extinction(osDF=df, osParticipant=participant, osMethod=method, currentDict=interactionDict)
   return(seOutput)
 }
 
-library(stringr)
-exampleDF[1,1] <- 50
-newList <- second_extinction(df = web)
-web[1,1]==1
-newList$BAT0001 <- c(newList$BAT0001, "PREY1")
-prey <- "PREY1"
-prey
-str(newList$BAT0001)
-sum(str_count(newList$BAT0001, prey))
-newList
-predator <- "BAT0001"
-append(newList[[predator]], "YOLO")
-which(newList[[predator]] == "OTU_42")
+#library(stringr)
+#exampleDF[1,1] <- 50
+#newList <- second_extinction(df = web)
+#web[1,1]==1
+#newList$BAT0001 <- c(newList$BAT0001, "PREY1")
+#prey <- "PREY1"
+#prey
+#str(newList$BAT0001)
+#sum(str_count(newList$BAT0001, prey))
+#newList
+#predator <- "BAT0001"
+#append(newList[[predator]], "YOLO")
+#which(newList[[predator]] == "OTU_42")
 #taxaDict[[predator]] <- taxaDict[[predator]][taxaDict[[predator]] != preyOTU]
-newList[[predator]][newList[[predator]] != "OTU_42"]
+#newList[[predator]][newList[[predator]] != "OTU_42"]
+
+second_extinction(df=exampleDF, participant="lower", method="abundance")
+
+
